@@ -1,22 +1,8 @@
-# Reflection — Day 17 (≤ 200 words)
+Reflection — Day 17 (≤ 200 words)
+1. The flywheel. Bước nguy hiểm nhất là flatten() trong traces.py. Nếu đệ quy bị thiếu một nhánh con, Bronze vẫn có dữ liệu nhưng thiếu span — downstream vẫn chạy, eval/DPO pair vẫn build được, chỉ là sai lặng lẽ. Cách phát hiện: so sánh tổng n_spans trả về với tổng span đếm trực tiếp từ file JSON gốc mỗi lần ingest; alert nếu lệch.
 
-Answer briefly, in your own words. This is graded on reasoning, not length.
+2. Decontamination. Nếu bỏ bước này, model train trên đúng những prompt dùng để chấm điểm → eval score bị thổi phồng. Cụ thể: DPO pair có prompt trùng eval set sẽ khiến model "học thuộc" câu trả lời đúng cho eval, nhưng ngoài thực tế thì không tổng quát hóa được. Dấu hiệu: eval loss thấp bất thường trong khi production accuracy không tăng — khoảng cách train/real ngày càng doãng.
 
-1. **The flywheel.** Day 13 emitted agent traces; today you turned them into an
-   eval set and DPO pairs that Day 22 will train on. Which step in
-   `traces → Bronze → datasets` would break most silently in production if you
-   got it wrong — and how would you detect it?
+3. Point-in-time. Điểm tín dụng (credit score) trong hệ thống phê duyệt vay. Nếu join giá trị score mới nhất thay vì score tại thời điểm nộp đơn, model thấy score đã cập nhật sau khi khoản vay được duyệt — dữ liệu tương lai rò vào training, model học nhầm pattern.
 
-2. **Decontamination.** Your run dropped 2 of 3 preference pairs because their
-   prompts were in the eval set. What concretely goes wrong if you *skip* this
-   step and train on those pairs? How would the lie show up in your metrics?
-
-3. **Point-in-time.** The naive join leaked a future `lifetime_spend` into the
-   training row. Describe one feature in a system you know that would be
-   dangerous to join without an `ASOF`/point-in-time guard.
-
-4. **Graph vs vector.** From `kg_demo.py`, name one question the knowledge graph
-   answers well that flat chunk retrieval (`embed.py`) would struggle with, and
-   one where the graph is overkill.
-
-_Write your answers below._
+4. Graph vs vector. Graph trả lời tốt câu hỏi đa bước: "Widget giao từ kho nào?" — cần 2 hop (widget → accessory → warehouse Hanoi) mà không có chunk nào chứa đủ cả hai fact này. Vector foil trong kg_demo.py xác nhận điều đó. Ngược lại, graph là overkill cho câu hỏi đơn như "Chính sách đổi trả là gì?" — một chunk duy nhất đã đủ, không cần traverse.
